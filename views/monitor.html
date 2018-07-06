@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>网页监测</title>
+</head>
+<body>
+<div align="center">
+    ID：<input type="text" name="id" id="id" size="12" placeholder="请输入搜索内容" /><br>
+    项目名：&nbsp<input type="text" name="Pro_Name" id="Pro_Name" size="12" placeholder="请输入搜索内容"/>
+    &nbsp;&nbsp;&nbsp;<button type="button" onclick="find()">查找</button>
+</div>
+<div>
+    <table id="table1" width="70%" border="0" align="center" cellpadding="0" cellspacing="1" bgcolor="#666666">
+        <thead>
+        <tr align="center">
+        <td bgcolor="#FFFFFF">id</td>
+        <td bgcolor="#FFFFFF">项目名</td>
+        <td bgcolor="#FFFFFF">监测频率(S)</td>
+        <td bgcolor="#FFFFFF">链接</td>
+        <td bgcolor="#FFFFFF">操作</td>
+        </tr></thead>
+        <tbody id="a"></tbody>
+    </table>
+</div>
+<br><br>
+<div align="center">
+    <table class="mars" align="center" cellspacing="1" cellpadding="0" width="100%" border="0">
+        <tbody>
+        <tr>
+            <td class="item">
+                <div align="right">项目名:</div>
+            </td>
+            <td>
+                <input type="text" name="ProName" id="ProName">&nbsp;&nbsp;
+            </td>
+        </tr>
+        <tr>
+            <td class="item">
+                <div align="right">监测频率(S):</div>
+            </td>
+            <td>
+                <label></label>
+                <select id="seltime" name="seltime">
+                    <option value="1">1</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td class="item">
+                <div align="right">链接:</div>
+            </td>
+            <td>
+                <input type="text" name="Links" id="Links">&nbsp;&nbsp;
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div align="center"><button type="button" onclick="add()">添加</button><br></div>
+<br>
+<div align="center">
+    <table><tr>
+        <td><button type="button" onclick="get()">监测</button><br></td>
+        <td><input type="text" id="txt"></td>
+        <td><button type="button" onclick="stop()">暂停</button><br></td>
+    </tr></table>
+</div><br>
+<div align="center">
+        <table width="70%" border="0" align="center" cellpadding="0" cellspacing="1" bgcolor="#666666">
+            <thead>
+            <tr align="center">
+                <td bgcolor="#FFFFFF">id</td>
+                <td bgcolor="#FFFFFF">项目名</td>
+                <td bgcolor="#FFFFFF">监测频率(S)</td>
+                <td bgcolor="#FFFFFF">链接</td>
+                <td bgcolor="#FFFFFF">状态码</td>
+                <td bgcolor="#FFFFFF">状态信息</td>
+                <td bgcolor="#FFFFFF">运行状态</td>
+            </tr></thead>
+            <tbody id="b"></tbody>
+        </table>
+
+</div>
+</body>
+
+<script src="../static/js/jquery-3.2.1.min.js"></script>
+<script language="javascript">
+
+    function add() {
+        var ProName = document.getElementById("ProName").value;
+        var num = document.getElementById("seltime").selectedIndex;//获取当前选择项的索引
+        var Mo_Frequency = document.getElementById("seltime").options[num].value;//获取当前选择项的值
+        var Links = document.getElementById("Links").value;
+        console.log(ProName);
+        console.log(Links);
+        console.log(Mo_Frequency);
+        if (Pro_Name===""){
+            alert("项目名不能为空！");
+            return false;
+        }
+        if (Mo_Frequency===""){
+            alert("监测频率不能为空！");
+            return false;
+        }
+        if (Links===""){
+            alert("链接不能为空！");
+            return false;
+        }
+        $.ajax({
+            url:'http://localhost:8080/monitor/http/add',
+            data:{
+                Pro_Name : ProName,
+                Mo_Frequency : Mo_Frequency,
+                Links : Links,
+                State : "0"
+            },
+            method:'POST',
+            success:function (data) {
+                alert(data);
+                find()
+            }
+        })
+    }
+
+    function find() {
+        var id = document.getElementById("id").value;
+        var Pro_Name = document.getElementById("Pro_Name").value;
+        var text;
+        if (id === "" && Pro_Name === ""){
+            $.ajax({
+                url:'http://localhost:8080/monitor/http/find',
+                methods:'GET',
+                success:function (data) {
+                    if (data){
+                        for (var i in data){
+                            text += "<tr align='center'><td bgcolor='#FFFFF'>"+data[i].id+"</td>"+
+                                    "<td bgcolor='#FFFFF'>"+data[i].Pro_Name+"</td>"+
+                                    "<td bgcolor='#FFFFF'>"+data[i].Mo_Frequency+"</td>"+
+                                    "<td bgcolor='#FFFFF'>"+data[i].Links+"</td>"+
+                                    "<td bgcolor='#FFFFF'>" +
+                                    "<button type='button' id='"+i+1+"' onclick='update()'>编辑</button>&nbsp&nbsp&nbsp" +
+                                    "<button type='button' name='"+i+1+"' onclick='del(this)'>删除</button>" +
+                                    "</td></tr>";
+                            $("#a").html(text);
+                        }
+                    }else {
+                        text = "<tr align='center'><td bgcolor='#FFFFF' colspan='5'>没有找到任何信息！</td></tr>";
+                        $("#a").html(text);
+                    }
+                }
+            })
+        }else {
+            $.ajax({
+                url:'http://localhost:8080/monitor/http/find',
+                data:{
+                    id : id,
+                    Pro_Name : Pro_Name
+                },
+                methods:'GET',
+                success:function (data) {
+                    //console.log(data);
+                    //var msg = JSON.parse(data);
+                    if (data){//判断json数据包是否为空
+                        text = "<tr align='center'><td bgcolor='#FFFFF'>"+data.id+"</td>"+
+                                "<td bgcolor='#FFFFF'>"+data.Pro_Name+"</td>"+
+                                "<td bgcolor='#FFFFF'>"+data.Mo_Frequency+"</td>"+
+                                "<td bgcolor='#FFFFF'>"+data.Links+"</td>"+
+                                "<td bgcolor='#FFFFF'>" +
+                                "<button type='button' onclick='update()'>编辑</button>&nbsp&nbsp&nbsp" +
+                                "<button type='button' onclick='del()'>删除</button>" +
+                                "</td></tr>";
+                        $("#a").html(text);
+                    }else {
+                        text += "<tr align='center'><td bgcolor='#FFFFF' colspan='5'>没有找到任何信息！</td></tr>";
+                        $("#a").html(text);
+                    }
+                }
+            })
+        }
+    }
+
+    function update() {
+        var id,proname,time,link
+        $("#table1 tbody tr").click(function () {
+            id = $(this).children().eq(0).html();
+            proname = $(this).children().eq(1).html();
+            time = $(this).children().eq(2).html();
+            link = $(this).children().eq(3).html();
+            text = "<div id='float-div' style='width: 35%;height: 150px;position:absolute;left: 30%;background: snow;border:2px solid black'>" +
+                    "<div align='center'>ID：<input type='text' value='"+id+"' name='proid' id='proid' readonly='readonly'><br>"+
+                    "项目名：<input type='text' value='"+proname+"' name='proName' id='proName'><br>"+
+                    "监测频率(S)：<label></label>\n" +
+                    "            <select id=\"sel_time\" name=\"sel_time\">" +
+                    "              <option value=\"1\">1</option>" +
+                    "               <option value=\"5\">5</option>" +
+                    "               <option value=\"10\">10</option>" +
+                    "             </select><br>"+
+                    "链接：<input type='text' value='"+link+"' name='prolink' id='prolink'></div><br>"+
+                    "<div align='center'><button type='button' onclick='doupdate()'>保存</button>&nbsp&nbsp&nbsp" +
+                    "<button type='button' onclick='cancel()'>取消</button></div>"+
+                    "</div>";
+            $("#table1").append(text);
+        });
+    }
+
+    function doupdate() {
+        var id = document.getElementById("proid").value;
+        var Pro_Name = document.getElementById("proName").value;
+        var num = document.getElementById("sel_time").selectedIndex;//获取当前选择项的索引
+        var Mo_Frequency = document.getElementById("sel_time").options[num].value;//获取当前选择项的值
+        var Links = document.getElementById("prolink").value;
+        if (Pro_Name===""){
+            alert("项目名不能为空！");
+            return false;
+        }
+        if (Mo_Frequency===""){
+            alert("监测频率不能为空！");
+            return false;
+        }
+        if (Links===""){
+            alert("链接不能为空！");
+            return false;
+        }
+        $.ajax({
+            url:'http://localhost:8080/monitor/http/update',
+            data:{
+                id : id,
+                Pro_Name : Pro_Name,
+                Mo_Frequency : Mo_Frequency,
+                Links : Links
+            },
+            method:'POST',
+            success:function (data) {
+                console.log(data);
+                alert(data);
+                cancel();
+                find();
+            }
+        })
+    }
+
+    function cancel() {
+        $("#float-div").remove()
+    }
+
+    function del(node) {
+        var id = node.getAttribute('name');
+        console.log(id);
+        $.ajax({
+            url:'http://localhost:8080/monitor/http/delete',
+            data:{
+                id : id,
+                state : "1"
+            },
+            method:'POST',
+            success:function (data) {
+                console.log(data);
+                alert(data);
+                find();
+            }
+        })
+    }
+
+    var c=0;
+    var t;
+    function get() {
+        t = window.setInterval("doget()",1000);
+    }
+
+    function doget() {
+        var text;
+        document.getElementById('txt').value=c;
+        c=c+1;
+        $.ajax({
+            url:'http://localhost:8080/monitor/http/result',
+            method:'GET',
+            success:function (data) {
+                if (data) {
+                    for (var i in data){
+                        text += "<tr align='center'><td bgcolor='#FFFFF'>"+data[i].id+"</td>"+
+                                "<td bgcolor='#FFFFF'>"+data[i].Pro_Name+"</td>"+
+                                "<td bgcolor='#FFFFF'>"+data[i].Mo_Frequency+"</td>"+
+                                "<td bgcolor='#FFFFF'>"+data[i].Links+"</td>"+
+                                "<td bgcolor='#FFFFF'>"+data[i].statue+"</td>"+
+                                "<td bgcolor='#FFFFF'>"+data[i].text+"</td>";
+                        if (data[i].flag===0){
+                            text += "<td bgcolor='#FFFFF'><img src='../static/img/success.png' /></td>";
+                        }else {
+                            text += "<td bgcolor='#FFFFF'><img src='../static/img/fail.png' /></td>";
+                        }
+                        $("#b").html(text);
+                    }
+                }
+            }
+        })
+    }
+
+    function stop() {
+        document.getElementById('txt').value=0;
+        window.clearInterval(t);
+    }
+
+    $(function(){//加载JS
+        //console.log(1);
+        find();
+    })
+</script>
+</html>
